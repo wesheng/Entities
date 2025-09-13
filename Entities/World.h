@@ -27,19 +27,27 @@ unsigned int GetComponentId() {
 class World
 {
 public:
+	/// <summary>
+	/// Creates an entity.
+	/// </summary>
+	/// <typeparam name="...T">A list of components formatted as a structure.</typeparam>
+	/// <param name="...components">The component data.</param>
+	/// <returns>A new entity.</returns>
+	/// <remarks>
+	/// Entities only contain identifiers. It is not aware of any components that it has.
+	/// </remarks>
 	template<typename... T>
 	Entity Create(T... components);
+	void Remove(Entity e);
 	template<typename... T>
 	void Attach(Entity e, T... components);
-	template<class T>
+	template<typename T>
 	void Detach(Entity e);
 
-	//template<typename... T>
-	//void System(std::function<void(World* world, std::vector<std::tuple<T*...>> components)> callback);
 	template<typename... T>
 	void System(std::function<void(World* world, Entity entity, T&... components)> callback);
 
-	template<class T>
+	template<typename T>
 	T* GetComponent(Entity e);
 private:
 	template<typename ... Targs>
@@ -54,8 +62,8 @@ private:
 	void TAttach(Entity e);
 
 private:
-	std::vector<int> _entities;
-	std::queue<int> _freeList;
+	std::vector<unsigned int> _entities;
+	std::queue<unsigned int> _freeList;
 	std::vector<std::bitset<MAX_COMPONENTS>> _componentMasks;
 
 	std::unordered_map<std::type_index, std::unique_ptr<IComponentArray>> _components;
@@ -64,11 +72,13 @@ private:
 template<typename... T>
 inline Entity World::Create(T... components)
 {
-	size_t index = _entities.size();
-	int generation = 0;
+	unsigned int index = (unsigned int)_entities.size();
+
+	// start counting generation from 1. 0 represents an invalid entity.
+	unsigned int generation = 1;
 	if (_freeList.empty())
 	{
-		index = _entities.size();
+		index = (unsigned int)_entities.size();
 		_entities.push_back(generation);
 		_componentMasks.push_back(0);
 	}
@@ -94,46 +104,22 @@ inline void World::Attach(Entity e, T... components)
 	TAttach(e, components...);
 }
 
-template<class T>
+template<typename T>
 inline void World::Detach(Entity e)
 {
-	std::type_index id = std::type_index(typeid(T));
-	auto it = _components.find(id);
-	if (it != _components.end())
+	int generation = _entities[e.ID];
+
+	if (generation == e.Generation)
 	{
-		ComponentArray<T>* array = static_cast<ComponentArray<T>*>(_components[id].get());
-		return array->Remove(e.ID);
+		std::type_index id = std::type_index(typeid(T));
+		auto it = _components.find(id);
+		if (it != _components.end())
+		{
+			ComponentArray<T>* array = static_cast<ComponentArray<T>*>(_components[id].get());
+			array->Remove(e.ID);
+		}
 	}
 }
-
-//template<typename ...T>
-//inline System<T...> World::MakeSystem(std::function<void(World* world, std::vector<T*...>components)> callback)
-//{
-//
-//	return System();
-//}
-
-//template<typename ...T>
-//inline void World::System(std::function<void(World* world, std::vector<std::tuple<T*...>> components)> callback)
-//{
-//	std::bitset<MAX_COMPONENTS> mask = GetMask<T...>();
-//
-//	std::vector<std::tuple<T*...>> entityComponentList;
-//	for (uint32_t entityId = 0; entityId < _componentMasks.size(); entityId++)
-//	{
-//		if ((_componentMasks[entityId] & mask) == mask) {
-//			Entity e;
-//			e.ID = entityId;
-//			e.Generation = _entities[entityId];
-//
-//			std::tuple<T*...> entityComponents = std::make_tuple<T*...>(GetComponent<T>(e)...);
-//
-//			entityComponentList.push_back(entityComponents);
-//		}
-//	}
-//
-//	callback(this, entityComponentList);
-//}
 
 template<typename ...T>
 inline void World::System(std::function<void(World* world, Entity e, T&...components)> callback)
@@ -142,24 +128,28 @@ inline void World::System(std::function<void(World* world, Entity e, T&...compon
 
 	for (uint32_t entityId = 0; entityId < _componentMasks.size(); entityId++)
 	{
-		if ((_componentMasks[entityId] & mask) == mask) {
-			Entity e;
-			e.ID = entityId;
-			e.Generation = _entities[entityId];
+		if (_entities[entityId] > 0)
+		{
+			if ((_componentMasks[entityId] & mask) == mask) {
+				Entity e;
+				e.ID = entityId;
+				e.Generation = _entities[entityId];
 
-			// std::tuple<T*...> entityComponents = std::make_tuple<T*...>(GetComponent<T>(e)...);
-
-			callback(this, e, (*GetComponent<T>(e))...);
+				callback(this, e, (*GetComponent<T>(e))...);
+			}
 		}
+
 	}
 }
 
-template<class T>
+template<typename T>
 inline T* World::GetComponent(Entity e)
 {
+	int generation = _entities[e.ID];
+
 	std::type_index id = std::type_index(typeid(T));
 	auto it = _components.find(id);
-	if (it != _components.end())
+	if (generation == e.Generation && it != _components.end())
 	{
 		ComponentArray<T>* array = static_cast<ComponentArray<T>*>(_components[id].get());
 		return array->Get(e.ID);
@@ -167,40 +157,11 @@ inline T* World::GetComponent(Entity e)
 	return nullptr;
 }
 
-template<typename ...T>
-inline void World::TSystem(std::function<void(World* world, std::vector<std::tuple<T*...>> components)> callback)
-{
-	std::bitset<MAX_COMPONENTS> mask = TGetMask<T...>();
-
-	std::vector<std::tuple<T*...>> entityComponentList;
-	for (uint32_t entityId = 0; entityId < _componentMasks.size(); entityId++)
-	{
-		if ((_componentMasks[entityId] & mask) == mask) {
-			Entity e;
-			e.ID = entityId;
-			e.Generation = _entities[entityId];
-
-			std::tuple<T*...> entityComponents = std::make_tuple<T*...>(GetComponent<T*>(e)...);
-
-			entityComponentList.push_back(entityComponents);
-		}
-	}
-
-	callback(this, entityComponentList);
-}
-
-template<typename ...Targs>
-inline std::tuple<Targs*...> World::GetComponents(Entity e)
-{
-
-	return std::tuple<Targs*...>();
-}
-
 template<typename ...Targs>
 inline std::bitset<MAX_COMPONENTS> World::GetMask()
 {
 	std::bitset<MAX_COMPONENTS> mask;
-	
+
 	(mask.set(GetComponentId<Targs>()), ...);
 
 	return mask;
@@ -209,20 +170,40 @@ inline std::bitset<MAX_COMPONENTS> World::GetMask()
 template<typename T, typename ...Targs>
 inline void World::TAttach(Entity e, T component, Targs ...components)
 {
-	std::type_index id = std::type_index(typeid(T));
-	auto it = _components.find(id);
-	if (it == _components.end())
+	int generation = _entities[e.ID];
+	if (e.Generation == generation)
 	{
-		_components[id] = std::make_unique<ComponentArray<T>>();
+		std::type_index id = std::type_index(typeid(T));
+		auto it = _components.find(id);
+		if (it == _components.end())
+		{
+			_components[id] = std::make_unique<ComponentArray<T>>();
+		}
+
+		ComponentArray<T>* array = static_cast<ComponentArray<T>*>(_components[id].get());
+		array->Insert(e.ID, component);
+
+		unsigned int componentId = GetComponentId<T>();
+		_componentMasks[e.ID].set(componentId);
+
+		TAttach(e, components...);
 	}
+}
 
-	ComponentArray<T>* array = static_cast<ComponentArray<T>*>(_components[id].get());
-	array->Insert(e.ID, component);
-
-	unsigned int componentId = GetComponentId<T>();
-	_componentMasks[e.ID].set(componentId);
-
-	TAttach(e, components...);
+inline void World::Remove(Entity e)
+{
+	int generation = _entities[e.ID];
+	if (generation == e.Generation)
+	{
+		std::bitset<MAX_COMPONENTS> componentMask = _componentMasks[e.ID];
+		for (auto& it : _components)
+		{
+			IComponentArray* componentArray = it.second.get();
+			componentArray->Remove(e.ID);
+		}
+		_entities[e.ID] = 0;
+		_freeList.emplace(e.ID);
+	}
 }
 
 inline void World::TAttach(Entity e)

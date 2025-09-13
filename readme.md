@@ -7,6 +7,5 @@ Note that this project is incomplete and may not be stable – do not use this i
 
 ## Features
 - Uses generational indexing to create new entities
-    - Note that entity deletion is currently not supported.
 - Stores components in a columnar fashion
-- Uses bitmasks for component lookup – Up to 100 components per entities currently supported
+- Uses bitmasks for component lookup – Up to 100 components supported

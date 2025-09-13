@@ -28,14 +28,14 @@ struct Velocity
 int main()
 {
 	World w;
-	Entity e1 = w.Create(Position{1}, Velocity{6});
-	
+	Entity e1 = w.Create(Position{ 1 }, Velocity{ 6 });
+
 	Position* p = w.GetComponent<Position>(e1);
 	Velocity* v = w.GetComponent<Velocity>(e1);
 	std::cout << p->X << ", " << v->Vel << std::endl;
 
 	std::function<void(World* world, Entity e, Position& position, Velocity& velocity)> movementSystem = [](World* world, Entity entity, Position& position, Velocity& velocity) {
-			position.X += velocity.Vel;
+		position.X += velocity.Vel;
 		};
 
 	w.System<Position, Velocity>(movementSystem);
@@ -43,6 +43,15 @@ int main()
 	p = w.GetComponent<Position>(e1);
 	v = w.GetComponent<Velocity>(e1);
 	std::cout << p->X << ", " << v->Vel << std::endl;
+
+	w.Remove(e1);
+
+	w.System<Position, Velocity>(movementSystem);
+	p = w.GetComponent<Position>(e1);
+	if (p == nullptr)
+	{
+		std::cout << "Position successfully removed" << std::endl;
+	}
 
 	return 0;
 }
