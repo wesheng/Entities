@@ -13,6 +13,7 @@ class ComponentArray : public IComponentArray
 {
 public:
 	void Insert(unsigned int entity, T component);
+	void InsertOrReplace(unsigned int entity, T component);
 	T* Get(unsigned int entity);
 	void Remove(unsigned int entity);
 private:
@@ -23,9 +24,21 @@ private:
 template<typename T>
 void ComponentArray<T>::Insert(unsigned int entity, T component)
 {
-	// _entities[entity] = _components.size();
 	_entities.emplace(entity, component);
-	// _components.push_back(component);
+}
+
+template<typename T>
+void ComponentArray<T>::InsertOrReplace(unsigned int entity, T component)
+{
+	auto it = _entities.find(entity);
+	if (it != _entities.end())
+	{
+		it->second = component;
+	}
+	else
+	{
+		_entities.emplace(entity, component);
+	}
 }
 
 template<typename T>

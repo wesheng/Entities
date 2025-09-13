@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Entity.h"
-#include "Component.h"
 #include <initializer_list>
 #include <vector>
 #include <queue>
@@ -45,10 +44,11 @@ public:
 	void Detach(Entity e);
 
 	template<typename... T>
-	void System(std::function<void(World* world, Entity entity, T&... components)> callback);
+	void System(std::function<void(World* world, Entity entity, T... components)> callback);
 
 	template<typename T>
-	T* GetComponent(Entity e);
+	T GetComponent(Entity e);
+
 private:
 	template<typename ... Targs>
 	std::tuple<Targs* ...> GetComponents(Entity e);
@@ -122,7 +122,7 @@ inline void World::Detach(Entity e)
 }
 
 template<typename ...T>
-inline void World::System(std::function<void(World* world, Entity e, T&...components)> callback)
+inline void World::System(std::function<void(World* world, Entity e, T...components)> callback)
 {
 	std::bitset<MAX_COMPONENTS> mask = GetMask<T...>();
 
@@ -135,15 +135,14 @@ inline void World::System(std::function<void(World* world, Entity e, T&...compon
 				e.ID = entityId;
 				e.Generation = _entities[entityId];
 
-				callback(this, e, (*GetComponent<T>(e))...);
+				callback(this, e, (GetComponent<T>(e))...);
 			}
 		}
-
 	}
 }
 
 template<typename T>
-inline T* World::GetComponent(Entity e)
+inline T World::GetComponent(Entity e)
 {
 	int generation = _entities[e.ID];
 
@@ -152,9 +151,9 @@ inline T* World::GetComponent(Entity e)
 	if (generation == e.Generation && it != _components.end())
 	{
 		ComponentArray<T>* array = static_cast<ComponentArray<T>*>(_components[id].get());
-		return array->Get(e.ID);
+		return *(array->Get(e.ID));
 	}
-	return nullptr;
+	return T();
 }
 
 template<typename ...Targs>
@@ -181,7 +180,7 @@ inline void World::TAttach(Entity e, T component, Targs ...components)
 		}
 
 		ComponentArray<T>* array = static_cast<ComponentArray<T>*>(_components[id].get());
-		array->Insert(e.ID, component);
+		array->InsertOrReplace(e.ID, component);
 
 		unsigned int componentId = GetComponentId<T>();
 		_componentMasks[e.ID].set(componentId);
