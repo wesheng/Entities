@@ -30,11 +30,11 @@ struct Velocity
 	}
 };
 
-void MovementSystem(World* world, Entity entity, Position position, Velocity velocity)
+void MovementSystem(World& world, Entity entity, Position position, Velocity velocity)
 {
 	position.X += velocity.Vel;
 
-	world->Attach(entity, position);
+	world.Attach(entity, position);
 }
 
 int main()
@@ -45,7 +45,6 @@ int main()
 	Position p = w.GetComponent<Position>(e1);
 	Velocity v = w.GetComponent<Velocity>(e1);
 	std::cout << p.X << ", " << v.Vel << std::endl;
-
 
 	w.System<Position, Velocity>(MovementSystem);
 
