@@ -13,7 +13,9 @@ struct Position
 	Position(int x) {
 		X = x;
 	}
-	Position() {}
+	Position() {
+
+	}
 };
 
 struct Velocity
@@ -23,7 +25,9 @@ struct Velocity
 	Velocity(int vel) {
 		Vel = vel;
 	}
-	Velocity() {}
+	Velocity() {
+
+	}
 };
 
 int main()

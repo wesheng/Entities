@@ -33,12 +33,9 @@ void ComponentArray<T>::InsertOrReplace(unsigned int entity, T component)
 	auto it = _entities.find(entity);
 	if (it != _entities.end())
 	{
-		it->second = component;
+		_entities.erase(it);
 	}
-	else
-	{
-		_entities.emplace(entity, component);
-	}
+	_entities.emplace(entity, component);
 }
 
 template<typename T>

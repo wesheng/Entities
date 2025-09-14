@@ -14,9 +14,18 @@
 #include <bitset>
 #include "System.h"
 
+/// <summary>
+/// THe max number of components.
+/// </summary>
 const unsigned int MAX_COMPONENTS = 100;
+
 static unsigned int Component_Count = 0;
 
+/// <summary>
+/// Assigns and retrieves a component identifier.
+/// </summary>
+/// <typeparam name="T">The component to obtain an identifier from.</typeparam>
+/// <returns>The identifier.</returns>
 template<typename T>
 unsigned int GetComponentId() {
 	static unsigned int id = Component_Count++;
@@ -37,33 +46,76 @@ public:
 	/// </remarks>
 	template<typename... T>
 	Entity Create(T... components);
-	void Remove(Entity e);
+	/// <summary>
+	/// Removes an entity (and associated components) from the world. Does nothing if the entity does not exist.
+	/// </summary>
+	/// <param name="entity">The entity to remove.</param>
+	void Remove(Entity entity);
+	/// <summary>
+	/// Adds or modifies component(s) to an entity.
+	/// </summary>
+	/// <typeparam name="...T">A list of component types to add.</typeparam>
+	/// <param name="entity">The entity to modify.</param>
+	/// <param name="...components">The list of components to add.</param>
 	template<typename... T>
-	void Attach(Entity e, T... components);
+	void Attach(Entity entity, T... components);
+	/// <summary>
+	/// Removes a component from an entity.
+	/// </summary>
+	/// <typeparam name="T">The component type to remove.</typeparam>
+	/// <param name="entity">The entity to remove the component from.</param>
 	template<typename T>
-	void Detach(Entity e);
+	void Detach(Entity entity);
 
 	template<typename... T>
 	void System(std::function<void(World* world, Entity entity, T... components)> callback);
 
+	/// <summary>
+	/// Retrieves the component value from an Entity. To update the component use Attach().
+	/// </summary>
+	/// <typeparam name="T">The component type to retrieve.</typeparam>
+	/// <param name="entity">The entity to retrieve the component for.</param>
+	/// <returns></returns>
 	template<typename T>
-	T GetComponent(Entity e);
+	T GetComponent(Entity entity);
 
 private:
 	template<typename ... Targs>
 	std::tuple<Targs* ...> GetComponents(Entity e);
 
+	/// <summary>
+	/// Retrieves the bitmask from specified components.
+	/// </summary>
+	/// <typeparam name="...Targs"></typeparam>
+	/// <returns></returns>
 	template<typename ... Targs>
 	std::bitset<MAX_COMPONENTS> GetMask();
 
+	/// <summary>
+	/// Recursively adds components to an entity.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="...Targs"></typeparam>
+	/// <param name="entity"></param>
+	/// <param name="component"></param>
+	/// <param name="...components"></param>
 	template<typename T, typename... Targs>
-	void TAttach(Entity e, T component, Targs... components);
+	void TAttach(Entity entity, T component, Targs... components);
 	// Basecase of above function. Does nothing.
-	void TAttach(Entity e);
+	void TAttach(Entity entity);
 
 private:
+	/// <summary>
+	/// The list of entities.
+	/// </summary>
 	std::vector<unsigned int> _entities;
+	/// <summary>
+	/// Manages removed entities. This enables quick retrieval of freed _entities slots.
+	/// </summary>
 	std::queue<unsigned int> _freeList;
+	/// <summary>
+	/// Used to keep track of the components that an entity has, for quick lookup.
+	/// </summary>
 	std::vector<std::bitset<MAX_COMPONENTS>> _componentMasks;
 
 	std::unordered_map<std::type_index, std::unique_ptr<IComponentArray>> _components;
