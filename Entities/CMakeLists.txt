@@ -3,7 +3,7 @@
 #
 
 # Add source to this project's executable.
-add_executable (Entities "Entities.cpp" "Entities.h" "World.h" "World.cpp" "Entity.h" "Entity.cpp"     "ComponentArray.h" "ComponentArray.cpp" "Query.h" "Query.cpp" "System.h" "System.cpp")
+add_library (Entities   "World.h" "World.cpp" "Entity.h" "Entity.cpp" "ComponentArray.h" "ComponentArray.cpp" "Query.h" "Query.cpp" "System.h" "System.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET Entities PROPERTY CXX_STANDARD 20)

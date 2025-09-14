@@ -13,3 +13,4 @@ project ("Entities")
 
 # Include sub-projects.
 add_subdirectory ("Entities")
+add_subdirectory("Demo")

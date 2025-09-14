@@ -1,9 +1,8 @@
-﻿// ECS.cpp : Defines the entry point for the application.
-//
-
-#include "Entities.h"
+#include "Demo.h"
 
 #include "World.h"
+#include <iostream>
+
 
 using namespace std;
 
