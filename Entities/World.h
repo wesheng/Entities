@@ -68,7 +68,7 @@ public:
 	void Detach(Entity entity);
 
 	template<typename... T>
-	void System(std::function<void(World* world, Entity entity, T... components)> callback);
+	void System(void(*callback)(World* world, Entity entity, T... components));
 
 	/// <summary>
 	/// Retrieves the component value from an Entity. To update the component use Attach().
@@ -174,7 +174,7 @@ inline void World::Detach(Entity e)
 }
 
 template<typename ...T>
-inline void World::System(std::function<void(World* world, Entity e, T...components)> callback)
+inline void World::System(void(*callback)(World* world, Entity e, T...components))
 {
 	std::bitset<MAX_COMPONENTS> mask = GetMask<T...>();
 

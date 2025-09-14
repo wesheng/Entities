@@ -30,6 +30,13 @@ struct Velocity
 	}
 };
 
+void MovementSystem(World* world, Entity entity, Position position, Velocity velocity)
+{
+	position.X += velocity.Vel;
+
+	world->Attach(entity, position);
+}
+
 int main()
 {
 	World w;
@@ -39,13 +46,8 @@ int main()
 	Velocity v = w.GetComponent<Velocity>(e1);
 	std::cout << p.X << ", " << v.Vel << std::endl;
 
-	std::function<void(World* world, Entity e, Position position, Velocity velocity)> movementSystem = [](World* world, Entity entity, Position position, Velocity velocity) {
-		position.X += velocity.Vel;
 
-		world->Attach(entity, position);
-		};
-
-	w.System<Position, Velocity>(movementSystem);
+	w.System<Position, Velocity>(MovementSystem);
 
 	p = w.GetComponent<Position>(e1);
 	v = w.GetComponent<Velocity>(e1);
@@ -53,7 +55,7 @@ int main()
 
 	w.Remove(e1);
 
-	w.System<Position, Velocity>(movementSystem);
+	w.System<Position, Velocity>(MovementSystem);
 	p = w.GetComponent<Position>(e1);
 
 	return 0;
