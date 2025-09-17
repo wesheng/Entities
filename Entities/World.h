@@ -73,6 +73,15 @@ public:
 	template<typename T>
 	T GetComponent(Entity entity);
 
+	/// <summary>
+	/// Checks to see if a component is attached to an Entity.
+	/// </summary>
+	/// <typeparam name="T">The component type to check.</typeparam>
+	/// <param name="entity">The entity to check the component for.</param>
+	/// <returns></returns>
+	template<typename T>
+	bool HasComponent(Entity entity);
+
 private:
 	template<typename ... Targs>
 	std::tuple<Targs* ...> GetComponents(Entity e);
@@ -257,9 +266,29 @@ inline T World::GetComponent(Entity e)
 	if (generation == e.Generation && it != _components.end())
 	{
 		ComponentArray<T>* array = static_cast<ComponentArray<T>*>(_components[id].get());
-		return *(array->Get(e.ID));
+		T* component = array->Get(e.ID);
+		if (component != nullptr)
+		{
+			return *component;
+		}
 	}
 	return T();
+}
+
+template<typename T>
+inline bool World::HasComponent(Entity e)
+{
+	int generation = _entities[e.ID].Generation;
+
+	std::type_index id = std::type_index(typeid(T));
+	auto it = _components.find(id);
+	if (generation == e.Generation && it != _components.end())
+	{
+		ComponentArray<T>* array = static_cast<ComponentArray<T>*>(_components[id].get());
+		T* component = array->Get(e.ID);
+		return component != nullptr;
+	}
+	return false;
 }
 
 template<typename T, typename ...Targs>

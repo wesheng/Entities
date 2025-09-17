@@ -9,6 +9,7 @@ struct TestComponent
 TEST(Entities, CreateWorld)
 {
 	World w;
+	SUCCEED();
 }
 
 TEST(Entities, CreateEntity)
@@ -38,10 +39,51 @@ TEST(Entities, AddComponent)
 	World w;
 	Entity e = w.Create();
 	
-	TestComponent component;
-	component.value = 4;
-	w.Attach(e, component);
+	TestComponent expected;
+	expected.value = 4;
+	w.Attach(e, expected);
 
-	TestComponent tc = w.GetComponent<TestComponent>(e);
-	EXPECT_EQ(tc.value, component.value);
+	TestComponent actual = w.GetComponent<TestComponent>(e);
+	EXPECT_EQ(actual.value, expected.value);
+}
+
+TEST(Entities, HasComponent)
+{
+	World w;
+	Entity e = w.Create();
+
+	TestComponent expected;
+	expected.value = 10;
+	w.Attach(e, expected);
+
+	EXPECT_TRUE(w.HasComponent<TestComponent>(e));
+}
+
+TEST(Entities, UpdateComponent)
+{
+	World w;
+	Entity e = w.Create();
+	TestComponent expected;
+	expected.value = 2;
+	w.Attach(e, expected);
+
+	expected.value = 4;
+	w.Attach(e, expected);
+
+	TestComponent actual = w.GetComponent<TestComponent>(e);
+	EXPECT_EQ(actual.value, expected.value);
+}
+
+TEST(Entities, DetachComponent)
+{
+	World w;
+	Entity e = w.Create();
+	TestComponent expected;
+	expected.value = 3;
+	w.Attach(e, expected);
+
+	w.Detach<TestComponent>(e);
+
+	TestComponent actual = w.GetComponent<TestComponent>(e);
+	EXPECT_NE(actual.value, expected.value);
 }
