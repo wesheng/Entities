@@ -8,4 +8,4 @@ Note that this project is incomplete and may not be stable – do not use this i
 ## Features
 - Uses generational indexing to create new entities
 - Stores components in a columnar fashion
-- Uses bitmasks for component lookup – Up to 100 components supported
+- Uses bitmasks for component lookup – Up to 100 component types supported
