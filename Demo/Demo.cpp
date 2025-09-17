@@ -37,25 +37,44 @@ void MovementSystem(World& world, Entity entity, Position position, Velocity vel
 	world.Attach(entity, position);
 }
 
+void CheckPosition(World& world, Entity entity, Position position)
+{
+	std::cout << "Entity " << entity.ID << " position: " << position.X << std::endl;
+}
+
+void Move(World& world, Query<Position, Velocity> query)
+{
+	Position pos = query.Get<Position>();
+	Velocity vel = query.Get<Velocity>();
+	pos.X += vel.Vel;
+	world.Attach(query.Entity, pos);
+}
+
+void StaticMovement(World& world, Query<Position> query, Without<Velocity> without)
+{
+	Position pos = query.Get<Position>();
+	std::cout << "Stationary: " << pos.X << std::endl;
+}
+
 int main()
 {
 	World w;
 	Entity e1 = w.Create(Position{ 1 }, Velocity{ 6 });
+	Entity e2 = w.Create(Position{ 7 });
 
-	Position p = w.GetComponent<Position>(e1);
-	Velocity v = w.GetComponent<Velocity>(e1);
-	std::cout << p.X << ", " << v.Vel << std::endl;
+	w.SystemQ(Move);
+	w.SystemQ(StaticMovement);
+	//w.System<Position>(CheckPosition);
+	//std::cout << "---" << std::endl;
 
-	w.System<Position, Velocity>(MovementSystem);
-
-	p = w.GetComponent<Position>(e1);
-	v = w.GetComponent<Velocity>(e1);
-	std::cout << p.X << ", " << v.Vel << std::endl;
+	//w.System<Position, Velocity>(MovementSystem);
+	//w.System<Position>(CheckPosition);
+	//std::cout << "---" << std::endl;
 
 	w.Remove(e1);
 
-	w.System<Position, Velocity>(MovementSystem);
-	p = w.GetComponent<Position>(e1);
+	//w.System<Position, Velocity>(MovementSystem);
+	//w.System<Position>(CheckPosition);
 
 	return 0;
 }

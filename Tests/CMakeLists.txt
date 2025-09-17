@@ -1,0 +1,20 @@
+﻿# CMakeList.txt : CMake project for Entities, include source and define
+# project specific logic here.
+#
+
+# Add source to this project's executable.
+enable_testing()
+
+
+add_executable (Tests "Tests.cpp")
+
+if (CMAKE_VERSION VERSION_GREATER 3.12)
+  set_property(TARGET Tests PROPERTY CXX_STANDARD 20)
+endif()
+
+# TODO: Add tests and install targets if needed.
+target_link_libraries(Tests GTest::gtest_main Entities)
+target_include_directories(Tests PUBLIC "${PROJECT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}/Entities")
+
+include(GoogleTest)
+gtest_discover_tests(Tests)

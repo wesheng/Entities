@@ -15,4 +15,11 @@ public:
 	/// This also serves as an identifier to allow IDs to be recycled.
 	/// </summary>
 	int Generation;
+
+	friend bool operator==(const Entity& l, const Entity& r) {
+		return l.ID == r.ID && l.Generation == r.Generation;
+	}
+	friend bool operator!=(const Entity& l, const Entity& r) {
+		return !(l == r);
+	}
 };
