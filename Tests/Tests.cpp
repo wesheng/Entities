@@ -6,6 +6,11 @@ struct TestComponent
 	int value = 1;
 };
 
+struct TestComponent2
+{
+	float value = 0.2f;
+};
+
 TEST(Entities, CreateWorld)
 {
 	World w;
@@ -45,6 +50,43 @@ TEST(Entities, AddComponent)
 
 	TestComponent actual = w.GetComponent<TestComponent>(e);
 	EXPECT_EQ(actual.value, expected.value);
+}
+
+TEST(Entities, AddMultipleComponent)
+{
+	World w;
+	Entity e = w.Create();
+
+	TestComponent expected1;
+	expected1.value = 3;
+	w.Attach(e, expected1);
+
+	TestComponent2 expected2;
+	expected2.value = 5.2f;
+	w.Attach(e, expected2);
+
+	TestComponent actual1 = w.GetComponent<TestComponent>(e);
+	EXPECT_EQ(actual1.value, expected1.value);
+
+	TestComponent2 actual2 = w.GetComponent<TestComponent2>(e);
+	EXPECT_EQ(actual2.value, expected2.value);
+}
+
+TEST(Entities, ReplaceSameComponent)
+{
+	World w;
+	Entity e = w.Create();
+
+	TestComponent expected1;
+	expected1.value = 3;
+	w.Attach(e, expected1);
+
+	TestComponent expected2;
+	expected2.value = 5;
+	w.Attach(e, expected2);
+
+	TestComponent actual = w.GetComponent<TestComponent>(e);
+	EXPECT_EQ(actual.value, expected2.value);
 }
 
 TEST(Entities, HasComponent)
@@ -87,3 +129,4 @@ TEST(Entities, DetachComponent)
 	TestComponent actual = w.GetComponent<TestComponent>(e);
 	EXPECT_NE(actual.value, expected.value);
 }
+
