@@ -130,3 +130,24 @@ TEST(Entities, DetachComponent)
 	EXPECT_NE(actual.value, expected.value);
 }
 
+void TestSystem(World& world, Query<TestComponent> query) {
+	TestComponent c = query.Get<TestComponent>();
+	c.value += 4;
+	world.Attach(query.Entity, c);
+}
+
+TEST(Entities, RunSystem)
+{
+	World w;
+	Entity e = w.Create();
+	TestComponent expected;
+	expected.value = 3;
+	w.Attach(e, expected);
+
+	w.System(TestSystem);
+
+	expected.value += 4;
+	TestComponent actual = w.GetComponent<TestComponent>(e);
+
+	EXPECT_EQ(actual.value, expected.value);
+}

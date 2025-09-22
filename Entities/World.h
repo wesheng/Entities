@@ -12,7 +12,6 @@
 #include "Query.h"
 #include <functional>
 #include <bitset>
-#include "System.h"
 #include "Utilities.h"
 
 class World
@@ -51,18 +50,23 @@ public:
 	void Detach(Entity entity);
 
 	/// <summary>
-	/// Creates a system using the passed callback function. Note that components are readonly. Use Attach() to update.
+	/// Executes a system using the passed callback function.
 	/// </summary>
-	/// <typeparam name="...T">The components to modify.</typeparam>
+	/// <typeparam name="...T">The components to include into the System.</typeparam>
 	/// <param name="callback">The callback function.</param>
-	template<typename... T>
-	void System(void(*callback)(World& world, Entity entity, T... components));
-
+	/// <remarks>Components are readonly. Use world.Attach() to update.</remarks>
 	template<typename...T>
-	void SystemQ(void(*callback)(World& world, Query<T...> query));
+	void System(void(*callback)(World& world, Query<T...> query));
 
+	/// <summary>
+	/// Executes a system using the passed callback function.
+	/// </summary>
+	/// <typeparam name="...T">The components to include into the System.</typeparam>
+	/// <typeparam name="...U">The components to exclude into the System, i.e. Entities that contain these components will be skipped.</typeparam>
+	/// <param name="callback">The callback function.</param>
+	/// <remarks>Components are readonly. Use world.Attach() to update.</remarks>
 	template<typename ...T, typename...U>
-	void SystemQ(void(*callback)(World& world, Query<T...> query, Without<U...> queryWithout));
+	void System(void(*callback)(World& world, Query<T...> query, Without<U...> queryWithout));
 
 	/// <summary>
 	/// Retrieves the component value from an Entity. To update the component use Attach().
@@ -103,6 +107,11 @@ private:
 	struct CreatedEntity {
 		unsigned int Generation = 0;
 		bool Instantiated = false;
+
+		/// <summary>
+		/// Used to keep track of the components that an entity has for quick lookup.
+		/// </summary>
+		std::bitset<MAX_COMPONENTS> ComponentMask;
 	};
 
 	/// <summary>
@@ -114,10 +123,6 @@ private:
 	/// </summary>
 	std::queue<unsigned int> _freeList;
 	/// <summary>
-	/// Used to keep track of the components that an entity has for quick lookup.
-	/// </summary>
-	std::vector<std::bitset<MAX_COMPONENTS>> _componentMasks;
-	/// <summary>
 	/// Stores all components.
 	/// </summary>
 	std::unordered_map<std::type_index, std::unique_ptr<IComponentArray>> _components;
@@ -128,8 +133,6 @@ inline Entity World::Create(T... components)
 {
 	unsigned int index = (unsigned int)_entities.size();
 
-	// start counting generation from 1. 0 represents an invalid entity.
-
 	unsigned int generation = 1;
 
 	if (_freeList.empty())
@@ -139,9 +142,10 @@ inline Entity World::Create(T... components)
 		CreatedEntity e;
 		e.Generation = generation;
 		e.Instantiated = true;
+		e.ComponentMask = 0;
 
 		_entities.push_back(e);
-		_componentMasks.push_back(0);
+		// _componentMasks.push_back(0);
 	}
 	else
 	{
@@ -183,36 +187,15 @@ inline void World::Detach(Entity e)
 	}
 }
 
-template<typename ...T>
-inline void World::System(void(*callback)(World& world, Entity e, T...components))
-{
-	std::bitset<MAX_COMPONENTS> mask = GetMask<T...>();
-
-	for (uint32_t entityId = 0; entityId < _componentMasks.size(); entityId++)
-	{
-		if (_entities[entityId].Instantiated)
-		{
-			std::bitset<MAX_COMPONENTS> entityMask = _componentMasks[entityId];
-			if ((entityMask & mask) == mask)  {
-				Entity e;
-				e.ID = entityId;
-				e.Generation = _entities[entityId].Generation;
-
-				callback(*this, e, (GetComponent<T>(e))...);
-			}
-		}
-	}
-}
-
 template<typename...T>
-inline void World::SystemQ(void(*callback)(World& world, Query<T...> query))
+inline void World::System(void(*callback)(World& world, Query<T...> query))
 {
 	std::bitset<MAX_COMPONENTS> mask = GetMask<T...>();
-	for (uint32_t entityId = 0; entityId < _componentMasks.size(); entityId++)
+	for (uint32_t entityId = 0; entityId < _entities.size(); entityId++)
 	{
 		if (_entities[entityId].Instantiated)
 		{
-			std::bitset<MAX_COMPONENTS> entityMask = _componentMasks[entityId];
+			std::bitset<MAX_COMPONENTS> entityMask = _entities[entityId].ComponentMask;
 			if ((entityMask & mask) == mask) {
 				Entity e;
 				e.ID = entityId;
@@ -228,7 +211,7 @@ inline void World::SystemQ(void(*callback)(World& world, Query<T...> query))
 }
 
 template<typename ...T, typename...U>
-inline void World::SystemQ(void(*callback)(World& world, Query<T...> query, Without<U...> queryWithout))
+inline void World::System(void(*callback)(World& world, Query<T...> query, Without<U...> queryWithout))
 {
 	std::bitset<MAX_COMPONENTS> mask = GetMask<T...>();
 	std::bitset<MAX_COMPONENTS> ignoreMask = GetMask<U...>();
@@ -236,11 +219,11 @@ inline void World::SystemQ(void(*callback)(World& world, Query<T...> query, With
 	std::bitset<MAX_COMPONENTS> targetMask = mask & (~ignoreMask);
 	std::bitset<MAX_COMPONENTS> testMask = mask | ignoreMask;
 
-	for (uint32_t entityId = 0; entityId < _componentMasks.size(); entityId++)
+	for (uint32_t entityId = 0; entityId < _entities.size(); entityId++)
 	{
 		if (_entities[entityId].Instantiated)
 		{
-			std::bitset<MAX_COMPONENTS> entityMask = _componentMasks[entityId];
+			std::bitset<MAX_COMPONENTS> entityMask = _entities[entityId].ComponentMask;
 			if ((entityMask & testMask) == targetMask) {
 				Entity e;
 				e.ID = entityId;
@@ -308,7 +291,7 @@ inline void World::TAttach(Entity e, T component, Targs ...components)
 		array->InsertOrReplace(e.ID, component);
 
 		unsigned int componentId = GetComponentId<T>();
-		_componentMasks[e.ID].set(componentId);
+		_entities[e.ID].ComponentMask.set(componentId);
 
 		TAttach(e, components...);
 	}
@@ -319,7 +302,7 @@ inline void World::Remove(Entity e)
 	int generation = _entities[e.ID].Generation;
 	if (generation == e.Generation)
 	{
-		std::bitset<MAX_COMPONENTS> componentMask = _componentMasks[e.ID];
+		std::bitset<MAX_COMPONENTS> componentMask = _entities[e.ID].ComponentMask;
 		for (auto& it : _components)
 		{
 			IComponentArray* componentArray = it.second.get();

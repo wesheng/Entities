@@ -62,8 +62,8 @@ int main()
 	Entity e1 = w.Create(Position{ 1 }, Velocity{ 6 });
 	Entity e2 = w.Create(Position{ 7 });
 
-	w.SystemQ(Move);
-	w.SystemQ(StaticMovement);
+	w.System(Move);
+	w.System(StaticMovement);
 	//w.System<Position>(CheckPosition);
 	//std::cout << "---" << std::endl;
 
