@@ -10,7 +10,6 @@
 #include "ComponentArray.h"
 #include <memory>
 #include "Query.h"
-#include <functional>
 #include <bitset>
 #include "Utilities.h"
 
