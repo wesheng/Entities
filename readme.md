@@ -1,5 +1,7 @@
 # Entities
-A simple implementation of the Entity-Component-System (ECS), written in C++.
+A simple implementation of the Entity-Component-System (ECS), written in C++. This project was created to gain familarity of the ECS architecture.
+
+Implementation is partly inspired by the work conducted by Redmond, et. al (2025). Note that this isn't an exact implementation. 
 
 The project uses Cmake to enable flexibility in compiler choice. 
 
@@ -11,4 +13,9 @@ The project uses Cmake to enable flexibility in compiler choice.
 ## Limitations
 - Not intuitive for behaviors dependent on another entity
 - Cannot create systems with optional components
-- Makes use of the std library, which may have an impact on performance compared to direct implementations
+
+## References
+
+```
+Redmond, P., Castello, J., Trilla, J. M. C., & Kuper, L. (2025). Exploring the Theory and Practice of Concurrency in the Entity-Component-System Pattern (arXiv:2508.15264). arXiv. https://doi.org/10.48550/arXiv.2508.15264
+```
