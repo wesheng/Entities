@@ -1,5 +1,5 @@
 # Entities
-A simple implementation of the Entity-Component-System (ECS), written in C++. This project was created to gain familarity of the ECS architecture.
+A simple implementation of the Entity-Component-System (ECS), written in C++. This project was created to gain familarity of ECS architecture, and to gain an understanding of STL structures provided by modern C++.
 
 Implementation is partly inspired by the work conducted by Redmond, et. al (2025). Note that this isn't an exact implementation. 
 
